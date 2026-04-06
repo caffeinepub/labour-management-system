@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Labour Panel — Labour Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'Inter', system-ui, sans-serif; box-sizing: border-box; }
+
+    body {
+      background: linear-gradient(135deg, #071826 0%, #0B2A3A 60%, #071320 100%);
+      min-height: 100vh;
+      color: #EAF0F7;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%);
+      pointer-events: none; z-index: 0;
+    }
+
+    .orb {
+      position: fixed; border-radius: 50%; filter: blur(100px);
+      opacity: 0.12; pointer-events: none; z-index: 0;
+    }
+    .orb-1 { width: 350px; height: 350px; background: #22D3EE; top: -80px; right: -80px; }
+    .orb-2 { width: 300px; height: 300px; background: #A855F7; bottom: -60px; left: -60px; }
+
+    /* Header */
+    #header {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(7,24,38,0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      padding: 0.875rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .logo {
+      display: flex; align-items: center; gap: 0.625rem;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #0B84FF, #22D3EE);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Glass card */
+    .glass-card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.11);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 16px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.32);
+      transition: all 0.25s ease;
+      position: relative; z-index: 1;
+    }
+    .glass-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(255,255,255,0.17);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.45);
+    }
+
+    /* Stats */
+    .stat-card { padding: 1.25rem 1.5rem; }
+    .stat-label {
+      font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em;
+      text-transform: uppercase; color: #9AA8B6; margin-bottom: 0.4rem;
+    }
+    .stat-value {
+      font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 0.3rem;
+    }
+    .stat-sub { font-size: 0.78rem; color: #9AA8B6; }
+
+    /* Mark Attendance Button */
+    .attend-btn {
+      background: linear-gradient(135deg, #0B84FF 0%, #0056B3 100%);
+      color: #fff; border: none; border-radius: 50px;
+      padding: 1rem 2.5rem; font-size: 1.1rem; font-weight: 700;
+      cursor: pointer; transition: all 0.3s ease;
+      box-shadow: 0 6px 24px rgba(11,132,255,0.4), 0 0 40px rgba(11,132,255,0.15);
+      display: flex; align-items: center; gap: 0.75rem;
+      letter-spacing: 0.01em;
+    }
+    .attend-btn:hover {
+      transform: scale(1.04) translateY(-2px);
+      box-shadow: 0 12px 36px rgba(11,132,255,0.6), 0 0 60px rgba(11,132,255,0.2);
+    }
+    .attend-btn:active { transform: scale(0.98); }
+    .attend-btn:disabled {
+      opacity: 0.55; cursor: not-allowed; transform: none;
+      box-shadow: none;
+    }
+    .attend-btn.marked {
+      background: linear-gradient(135deg, #10B981, #059669);
+      box-shadow: 0 6px 24px rgba(16,185,129,0.4);
+    }
+
+    /* Date badge */
+    .date-badge {
+      display: inline-flex; align-items: center; gap: 0.375rem;
+      padding: 0.375rem 1rem; border-radius: 50px;
+      background: rgba(34,211,238,0.1); border: 1px solid rgba(34,211,238,0.2);
+      color: #22D3EE; font-size: 0.85rem; font-weight: 500;
+    }
+
+    /* Logout */
+    .btn-logout {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 1rem; border-radius: 50px;
+      background: rgba(239,68,68,0.12); color: #FCA5A5;
+      border: 1px solid rgba(239,68,68,0.25);
+      cursor: pointer; font-size: 0.85rem; font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .btn-logout:hover { background: rgba(239,68,68,0.22); }
+
+    /* Toast */
+    #toast-container {
+      position: fixed; top: 1rem; right: 1rem;
+      z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .toast {
+      padding: 0.75rem 1.1rem; border-radius: 10px; font-size: 0.875rem;
+      font-weight: 500; color: #EAF0F7;
+      backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      animation: toastIn 0.3s ease; min-width: 220px;
+    }
+    .toast.success { background: rgba(16,185,129,0.25); border-color: rgba(16,185,129,0.35); }
+    .toast.error { background: rgba(239,68,68,0.25); border-color: rgba(239,68,68,0.35); }
+    .toast.info { background: rgba(11,132,255,0.25); border-color: rgba(11,132,255,0.35); }
+    @keyframes toastIn { from { opacity:0; transform: translateX(30px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes toastOut { from { opacity:1; } to { opacity:0; transform: translateX(30px); } }
+    .toast.dismiss { animation: toastOut 0.3s ease forwards; }
+
+    /* Slide up animation */
+    @keyframes slideUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+    .slide-up { animation: slideUp 0.4s ease forwards; }
+    .slide-up-delay-1 { animation: slideUp 0.4s 0.1s ease both; }
+    .slide-up-delay-2 { animation: slideUp 0.4s 0.2s ease both; }
+    .slide-up-delay-3 { animation: slideUp 0.4s 0.3s ease both; }
+
+    /* Avatar */
+    .avatar {
+      background: linear-gradient(135deg, #0B84FF, #A855F7);
+      border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-weight: 700; color: white;
+      flex-shrink: 0;
+    }
+
+    /* Pulse ring */
+    @keyframes pulse-ring {
+      0% { transform: scale(1); opacity: 0.6; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+    .pulse-ring {
+      position: absolute; inset: -8px; border-radius: 50px;
+      border: 2px solid rgba(11,132,255,0.5);
+      animation: pulse-ring 1.5s ease-out infinite;
+    }
+
+    .spinner {
+      width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin 0.7s linear infinite; display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Connection status */
+    #conn-status {
+      position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%);
+      font-size: 0.78rem; font-weight: 500; padding: 0.3rem 0.875rem;
+      border-radius: 50px; backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1); z-index: 10;
+    }
+    #conn-status.connected { background: rgba(16,185,129,0.2); color: #6EE7B7; border-color: rgba(16,185,129,0.3); }
+    #conn-status.error { background: rgba(239,68,68,0.2); color: #FCA5A5; border-color: rgba(239,68,68,0.3); }
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div id="toast-container"></div>
+  <div id="conn-status">⏳ Loading...</div>
+
+  <!-- HEADER -->
+  <header id="header">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="20" height="20" fill="none" viewBox="0 0 28 28">
+          <path d="M6 22L14 6L22 22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8.5 17H19.5" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div style="font-size:0.875rem;font-weight:700;color:#EAF0F7;line-height:1.2;">Labour Management</div>
+        <div style="font-size:0.68rem;color:#9AA8B6;">Worker Dashboard</div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:0.75rem;">
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <div class="avatar" id="labour-avatar" style="width:32px;height:32px;font-size:0.75rem;">?</div>
+        <span id="labour-name-header" style="font-size:0.875rem;font-weight:600;">Loading...</span>
+      </div>
+      <button class="btn-logout" id="logout-btn">
+        🚪 Logout
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main style="max-width:680px;margin:0 auto;padding:2rem 1.25rem 5rem;">
+
+    <!-- Greeting Card -->
+    <div class="glass-card slide-up" style="padding:1.75rem;margin-bottom:1.5rem;">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+        <div class="avatar" id="labour-avatar-main" style="width:56px;height:56px;font-size:1.25rem;">?</div>
+        <div>
+          <div style="font-size:0.8rem;color:#9AA8B6;font-weight:500;">Welcome back</div>
+          <div id="labour-greeting" style="font-size:1.4rem;font-weight:800;color:#EAF0F7;">Loading...</div>
+        </div>
+      </div>
+      <div class="date-badge" id="date-display">
+        📅 Loading date...
+      </div>
+    </div>
+
+    <!-- Mark Attendance Section -->
+    <div class="glass-card slide-up-delay-1" style="padding:2rem;margin-bottom:1.5rem;text-align:center;">
+      <div style="font-size:1rem;font-weight:600;color:#EAF0F7;margin-bottom:0.5rem;">Mark Your Attendance</div>
+      <div style="font-size:0.85rem;color:#9AA8B6;margin-bottom:1.75rem;">Tap the button below to record today's attendance</div>
+
+      <div style="position:relative;display:inline-block;">
+        <div class="pulse-ring" id="pulse-ring" style="display:none;"></div>
+        <button class="attend-btn" id="attend-btn">
+          <span id="attend-btn-icon">⏰</span>
+          <span id="attend-btn-text">Mark Attendance</span>
+        </button>
+      </div>
+
+      <div id="attend-status" style="margin-top:1rem;font-size:0.85rem;color:#9AA8B6;"></div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem;">
+      <!-- Daily Rate -->
+      <div class="glass-card stat-card slide-up-delay-1" style="border-top:2px solid rgba(11,132,255,0.4);">
+        <div class="stat-label">Daily Rate</div>
+        <div class="stat-value" id="stat-daily-rate" style="color:#0B84FF;">—</div>
+        <div class="stat-sub">Per day wage</div>
+      </div>
+
+      <!-- Days Worked -->
+      <div class="glass-card stat-card slide-up-delay-1" style="border-top:2px solid rgba(34,211,238,0.4);">
+        <div class="stat-label">Days Worked</div>
+        <div class="stat-value" id="stat-days" style="color:#22D3EE;">—</div>
+        <div class="stat-sub">Total days present</div>
+      </div>
+
+      <!-- Gross Salary -->
+      <div class="glass-card stat-card slide-up-delay-2" style="border-top:2px solid rgba(245,158,11,0.4);">
+        <div class="stat-label">Gross Salary</div>
+        <div class="stat-value" id="stat-gross" style="color:#F59E0B;">—</div>
+        <div class="stat-sub">Fixed monthly salary</div>
+      </div>
+
+      <!-- Total Advance -->
+      <div class="glass-card stat-card slide-up-delay-2" style="border-top:2px solid rgba(168,85,247,0.4);">
+        <div class="stat-label">Advance Taken</div>
+        <div class="stat-value" id="stat-advance" style="color:#A855F7;">—</div>
+        <div class="stat-sub">Total deductible</div>
+      </div>
+
+      <!-- Remaining Salary -->
+      <div class="glass-card stat-card slide-up-delay-3" style="border-top:2px solid rgba(16,185,129,0.4);">
+        <div class="stat-label">Remaining Salary</div>
+        <div class="stat-value" id="stat-remaining" style="color:#10B981;">—</div>
+        <div class="stat-sub" id="stat-remaining-sub">Estimated balance</div>
+      </div>
+    </div>
+
+    <!-- Salary Breakdown -->
+    <div class="glass-card slide-up-delay-2" style="padding:1.25rem;">
+      <div style="font-size:0.875rem;font-weight:700;color:#EAF0F7;margin-bottom:1rem;">📊 Salary Breakdown</div>
+      <div id="salary-breakdown">
+        <div style="text-align:center;padding:1.5rem;color:#9AA8B6;">Loading...</div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import {
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      collection,
+      query,
+      where,
+      getDocs,
+      addDoc,
+      serverTimestamp,
+      doc,
+      getDoc,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // ─── State ────────────────────────────────────────────────────
+    let currentUser = null;
+    let labourData = null;
+    let attendanceRecords = [];
+    let advanceRecords = [];
+    let todayMarked = false;
+
+    // Unsubscribe handles for real-time listeners
+    let unsubAttendance = null;
+    let unsubAdvances = null;
+
+    // Always compute today fresh so date resets automatically at midnight — no manual action needed
+    function getTodayDate() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────
+    function showToast(msg, type = "info") {
+      const c = document.getElementById("toast-container");
+      const t = document.createElement("div");
+      t.className = `toast ${type}`;
+      const icons = { success:"✅", error:"❌", info:"ℹ️" };
+      t.textContent = (icons[type] || "") + " " + msg;
+      c.appendChild(t);
+      setTimeout(() => { t.classList.add("dismiss"); setTimeout(() => t.remove(), 350); }, 3000);
+    }
+
+    function initials(name) {
+      return (name || "?").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+    }
+
+    function formatRupee(n) {
+      return "₹" + Number(n || 0).toLocaleString("en-IN");
+    }
+
+    function animateCounter(elId, target, prefix = "", suffix = "", duration = 1200) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      const start = performance.now();
+      const targetNum = typeof target === "number" ? target : parseFloat(target) || 0;
+      function update(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        const current = Math.floor(ease * targetNum);
+        const display = prefix.includes("₹") ? current.toLocaleString("en-IN") : current;
+        el.textContent = prefix + display + suffix;
+        if (progress < 1) requestAnimationFrame(update);
+        else {
+          const finalDisplay = prefix.includes("₹") ? targetNum.toLocaleString("en-IN") : targetNum;
+          el.textContent = prefix + finalDisplay + suffix;
+        }
+      }
+      requestAnimationFrame(update);
+    }
+
+    // ─── Update Date Display ──────────────────────────────────────
+    function updateDateDisplay() {
+      const dateEl = document.getElementById("date-display");
+      const formatted = new Date().toLocaleDateString("en-IN", {
+        weekday: "long", year: "numeric", month: "long", day: "numeric"
+      });
+      dateEl.textContent = "📅 " + formatted;
+    }
+
+    // ─── Auth Guard ───────────────────────────────────────────────
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.href = "index.html"; return; }
+
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (!snap.exists() || snap.data().role !== "labour") {
+          window.location.href = "index.html";
+          return;
+        }
+
+        currentUser = user;
+        labourData = { uid: user.uid, ...snap.data() };
+
+        // Update UI with user info
+        const ini = initials(labourData.name);
+        document.getElementById("labour-avatar").textContent = ini;
+        document.getElementById("labour-avatar-main").textContent = ini;
+        document.getElementById("labour-name-header").textContent = labourData.name;
+        document.getElementById("labour-greeting").textContent = labourData.name + " 👋";
+
+        document.getElementById("conn-status").textContent = "✅ Connected";
+        document.getElementById("conn-status").className = "connected";
+
+        updateDateDisplay();
+        setupRealtimeListeners();
+
+      } catch (e) {
+        console.error("Auth check failed:", e);
+        document.getElementById("conn-status").textContent = "❌ Error";
+        document.getElementById("conn-status").className = "error";
+        window.location.href = "index.html";
+      }
+    });
+
+    // ─── Real-time Listeners (onSnapshot) ─────────────────────────
+    // Each listener queries ONLY this user's data using userId == currentUser.uid
+    let unsubUserDoc = null;
+    function setupRealtimeListeners() {
+      const uid = labourData.uid;
+
+      // Listen to own user doc (so fixedSalary updates from admin reflect immediately)
+      unsubUserDoc = onSnapshot(doc(db, "users", uid), (snap) => {
+        if (snap.exists()) {
+          labourData = { uid, ...snap.data() };
+          updateStats();
+        }
+      }, (err) => {
+        console.error("User doc listener error:", err);
+      });
+
+      // Attendance: real-time, filtered by userId
+      const attQuery = query(
+        collection(db, "attendance"),
+        where("userId", "==", uid)
+      );
+      unsubAttendance = onSnapshot(attQuery, (snapshot) => {
+        attendanceRecords = snapshot.docs.map(d => d.data());
+        todayMarked = attendanceRecords.some(a => a.date === getTodayDate());
+        updateAttendanceButton();
+        updateStats();
+      }, (err) => {
+        console.error("Attendance listener error:", err);
+        showToast("Error loading attendance data.", "error");
+      });
+
+      // Advances: real-time, filtered by userId
+      const advQuery = query(
+        collection(db, "advances"),
+        where("userId", "==", uid)
+      );
+      unsubAdvances = onSnapshot(advQuery, (snapshot) => {
+        advanceRecords = snapshot.docs.map(d => d.data());
+        updateStats();
+      }, (err) => {
+        console.error("Advances listener error:", err);
+        showToast("Error loading advance data.", "error");
+      });
+    }
+
+    // ─── Update Stats ─────────────────────────────────────────────
+    function updateStats() {
+      const daysWorked = attendanceRecords.length;
+      const totalAdv = advanceRecords.reduce((s, a) => s + Number(a.amount || 0), 0);
+      const dailyRate = Number(labourData.dailyRate || 0);
+      // Use fixedSalary (manual gross salary set by admin) — NOT dailyRate × daysWorked
+      const grossSalary = Number(labourData.fixedSalary || 0);
+      const remaining = grossSalary - totalAdv;
+
+      // Populate Daily Rate card (not animated, set directly)
+      const dailyRateEl = document.getElementById("stat-daily-rate");
+      if (dailyRateEl) dailyRateEl.textContent = "₹" + Number(dailyRate).toLocaleString("en-IN");
+      // Animate the rest
+      animateCounter("stat-days", daysWorked, "", " days");
+      animateCounter("stat-gross", grossSalary, "₹");
+      animateCounter("stat-advance", totalAdv, "₹");
+      animateCounter("stat-remaining", Math.max(0, remaining), "₹");
+
+      document.getElementById("stat-remaining-sub").textContent = remaining < 0
+        ? "Advance exceeds salary"
+        : "After advance deduction";
+
+      // Breakdown
+      const breakdown = document.getElementById("salary-breakdown");
+      breakdown.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:0.625rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0.625rem 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <span style="color:#9AA8B6;font-size:0.875rem;">Daily Rate</span>
+            <span style="color:#EAF0F7;font-weight:600;">${formatRupee(dailyRate)} / day</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0.625rem 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <span style="color:#9AA8B6;font-size:0.875rem;">Days Worked</span>
+            <span style="color:#22D3EE;font-weight:600;">${daysWorked} days</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0.625rem 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <span style="color:#9AA8B6;font-size:0.875rem;">Gross Salary (Fixed)</span>
+            <span style="color:#F59E0B;font-weight:600;">${formatRupee(grossSalary)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0.625rem 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <span style="color:#9AA8B6;font-size:0.875rem;">Advance Taken</span>
+            <span style="color:#FCA5A5;font-weight:600;">- ${formatRupee(totalAdv)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0.875rem;border-radius:10px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);">
+            <span style="color:#EAF0F7;font-weight:600;">Remaining Salary</span>
+            <span style="color:${remaining >= 0 ? '#6EE7B7' : '#FCA5A5'};font-size:1.1rem;font-weight:800;">${formatRupee(remaining)}</span>
+          </div>
+        </div>
+        ${grossSalary === 0 ? '<div style="margin-top:0.75rem;padding:0.625rem;border-radius:8px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);color:#FCD34D;font-size:0.8rem;">⚠️ Gross salary not set — contact your admin.</div>' : ""}
+      `;
+    }
+
+    // ─── Attendance Button State ───────────────────────────────────
+    function updateAttendanceButton() {
+      const btn = document.getElementById("attend-btn");
+      const statusEl = document.getElementById("attend-status");
+      const pulseRing = document.getElementById("pulse-ring");
+
+      if (todayMarked) {
+        btn.classList.add("marked");
+        btn.disabled = true;
+        document.getElementById("attend-btn-icon").textContent = "✅";
+        document.getElementById("attend-btn-text").textContent = "Attendance Marked!";
+        statusEl.textContent = "You've already marked attendance for today.";
+        statusEl.style.color = "#6EE7B7";
+        if (pulseRing) pulseRing.style.display = "none";
+      } else {
+        btn.classList.remove("marked");
+        btn.disabled = false;
+        document.getElementById("attend-btn-icon").textContent = "⏰";
+        document.getElementById("attend-btn-text").textContent = "Mark Attendance";
+        statusEl.textContent = "Not marked today. Click the button to record your attendance.";
+        statusEl.style.color = "#9AA8B6";
+        if (pulseRing) pulseRing.style.display = "block";
+      }
+    }
+
+    // ─── Mark Attendance ──────────────────────────────────────────
+    async function markAttendance() {
+      console.log("[markAttendance] Called. currentUser:", currentUser, "labourData:", labourData, "todayMarked:", todayMarked);
+
+      if (!labourData || !currentUser) {
+        showToast("User session not ready. Please refresh.", "error");
+        console.error("[markAttendance] Aborted — labourData or currentUser is null.");
+        return;
+      }
+
+      if (todayMarked) {
+        showToast("Already marked for today!", "info");
+        return;
+      }
+
+      const btn = document.getElementById("attend-btn");
+      btn.disabled = true;
+      document.getElementById("attend-btn-icon").innerHTML = '<div class="spinner"></div>';
+      document.getElementById("attend-btn-text").textContent = 'Marking...';
+
+      try {
+        // Double-check for duplicate using userId field
+        const existingQ = await getDocs(query(
+          collection(db, "attendance"),
+          where("userId", "==", labourData.uid),
+          where("date", "==", getTodayDate())
+        ));
+
+        if (!existingQ.empty) {
+          todayMarked = true;
+          updateAttendanceButton();
+          showToast("Attendance already recorded.", "info");
+          return;
+        }
+
+        // Save with userId (new structure) — data is strictly per-user
+        console.log("[markAttendance] Saving attendance for userId:", labourData.uid, "date:", getTodayDate());
+        await addDoc(collection(db, "attendance"), {
+          userId: labourData.uid,
+          name: labourData.name,
+          date: getTodayDate(),
+          status: "present",
+          timestamp: serverTimestamp()
+        });
+        console.log("[markAttendance] Attendance saved successfully.");
+
+        // onSnapshot will automatically update attendanceRecords and stats
+        showToast("Attendance marked for " + new Date().toLocaleDateString("en-IN") + " ✅", "success");
+
+      } catch (e) {
+        console.error("Attendance error:", e);
+        showToast("Failed to mark attendance. Try again.", "error");
+        btn.disabled = false;
+        document.getElementById("attend-btn-icon").textContent = "⏰";
+        document.getElementById("attend-btn-text").textContent = "Mark Attendance";
+      }
+    }
+
+    // ─── Logout ───────────────────────────────────────────────────
+    async function handleLogout() {
+      // Unsubscribe real-time listeners before logging out
+      if (unsubUserDoc) unsubUserDoc();
+      if (unsubAttendance) unsubAttendance();
+      if (unsubAdvances) unsubAdvances();
+      try {
+        await signOut(auth);
+        window.location.href = "index.html";
+      } catch (e) {
+        showToast("Logout failed.", "error");
+      }
+    }
+
+    // ─── Event Listeners ─────────────────────────────────────────
+    document.getElementById("attend-btn").addEventListener("click", markAttendance);
+    document.getElementById("logout-btn").addEventListener("click", handleLogout);
+
+    // ─── Midnight Auto-Reset ──────────────────────────────────────
+    // Schedules a page reload at midnight so the dashboard auto-resets each day
+    // No data is deleted — the date filter simply moves to the new day
+    function scheduleMidnightReset() {
+      const now = new Date();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 500); // next midnight + 0.5s buffer
+      const msUntilMidnight = midnight - now;
+      console.log(`[auto-reset] Scheduled reload in ${Math.round(msUntilMidnight / 60000)} minutes at midnight`);
+      setTimeout(() => {
+        window.location.reload();
+      }, msUntilMidnight);
+    }
+    scheduleMidnightReset();
+  </script>
+</body>
+</html>

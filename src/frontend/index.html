@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Labour Management System — Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'Inter', system-ui, sans-serif; box-sizing: border-box; }
+
+    body {
+      background: linear-gradient(135deg, #071826 0%, #0B2A3A 50%, #071320 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.18;
+      pointer-events: none;
+      z-index: 0;
+      animation: floatOrb 8s ease-in-out infinite;
+    }
+    .orb-1 { width: 400px; height: 400px; background: #22D3EE; top: -100px; left: -100px; animation-delay: 0s; }
+    .orb-2 { width: 350px; height: 350px; background: #A855F7; bottom: -80px; right: -80px; animation-delay: 3s; }
+    .orb-3 { width: 250px; height: 250px; background: #0B84FF; top: 40%; left: 30%; animation-delay: 5s; }
+
+    @keyframes floatOrb {
+      0%, 100% { transform: translateY(0px) scale(1); }
+      50% { transform: translateY(-20px) scale(1.05); }
+    }
+
+    .glass-card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.13);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 20px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.45), 0 0 0 1px rgba(34,211,238,0.08);
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-glow::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 21px;
+      background: linear-gradient(135deg, rgba(34,211,238,0.4) 0%, transparent 40%, rgba(168,85,247,0.4) 100%);
+      z-index: -1;
+      opacity: 0.6;
+    }
+
+    .glass-input {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      color: #EAF0F7;
+      transition: all 0.25s ease;
+      outline: none;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 0.9375rem;
+    }
+    .glass-input::placeholder { color: #6B7A8A; }
+    .glass-input:focus {
+      border-color: rgba(34,211,238,0.6);
+      box-shadow: 0 0 0 3px rgba(34,211,238,0.12), 0 0 20px rgba(34,211,238,0.08);
+      background: rgba(255,255,255,0.09);
+    }
+    .glass-input option { background: #0B2A3A; color: #EAF0F7; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0B84FF 0%, #0066CC 100%);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      padding: 0.8rem 2rem;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 20px rgba(11,132,255,0.35);
+      letter-spacing: 0.01em;
+    }
+    .btn-primary:hover {
+      transform: scale(1.02) translateY(-1px);
+      box-shadow: 0 8px 30px rgba(11,132,255,0.5);
+    }
+    .btn-primary:active { transform: scale(0.99); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .tab-btn {
+      padding: 0.5rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      color: #9AA8B6;
+      border: 1px solid transparent;
+      background: transparent;
+    }
+    .tab-btn.active {
+      background: rgba(11,132,255,0.2);
+      border-color: rgba(11,132,255,0.4);
+      color: #EAF0F7;
+    }
+
+    #toast-container {
+      position: fixed;
+      top: 1.25rem;
+      right: 1.25rem;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      pointer-events: none;
+    }
+    .toast {
+      padding: 0.875rem 1.25rem;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #EAF0F7;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      animation: toastSlideIn 0.3s ease forwards;
+      pointer-events: auto;
+      min-width: 240px;
+      max-width: 360px;
+    }
+    .toast.success { background: rgba(16,185,129,0.25); border-color: rgba(16,185,129,0.35); }
+    .toast.error { background: rgba(239,68,68,0.25); border-color: rgba(239,68,68,0.35); }
+    .toast.info { background: rgba(11,132,255,0.25); border-color: rgba(11,132,255,0.35); }
+    @keyframes toastSlideIn {
+      from { opacity: 0; transform: translateX(40px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes toastSlideOut {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(40px); }
+    }
+    .toast.dismiss { animation: toastSlideOut 0.3s ease forwards; }
+
+    #conn-status {
+      position: fixed;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 0.35rem 1rem;
+      border-radius: 50px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      z-index: 10;
+      transition: all 0.3s ease;
+      color: #9AA8B6;
+    }
+    #conn-status.connected { background: rgba(16,185,129,0.2); color: #6EE7B7; border-color: rgba(16,185,129,0.3); }
+    #conn-status.error { background: rgba(239,68,68,0.2); color: #FCA5A5; border-color: rgba(239,68,68,0.3); }
+
+    .slide-up {
+      animation: slideUp 0.4s ease forwards;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .label { color: #9AA8B6; font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 0.375rem; display: block; }
+
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .logo-mark {
+      width: 52px; height: 52px;
+      background: linear-gradient(135deg, #0B84FF 0%, #22D3EE 50%, #A855F7 100%);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      box-shadow: 0 8px 24px rgba(11,132,255,0.4);
+    }
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div id="toast-container"></div>
+  <div id="conn-status">⏳ Connecting...</div>
+
+  <div class="glass-card card-glow w-full max-w-md p-8 slide-up">
+    <div class="logo-mark">
+      <svg width="28" height="28" fill="none" viewBox="0 0 28 28">
+        <path d="M6 22L14 6L22 22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M8.5 17H19.5" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="14" cy="14" r="12.5" stroke="white" stroke-width="1" opacity="0.3"/>
+      </svg>
+    </div>
+
+    <h1 class="text-center text-2xl font-bold text-white mb-1">Labour Management</h1>
+    <p class="text-center text-sm mb-6" style="color:#9AA8B6">Sign in to your workspace</p>
+
+    <div class="flex justify-center gap-2 mb-7 p-1 rounded-full" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08);">
+      <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Login</button>
+      <button class="tab-btn" id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- Login Form -->
+    <form id="login-form" onsubmit="handleLogin(event)">
+      <div class="mb-4">
+        <label class="label">Email Address</label>
+        <input type="email" id="login-email" class="glass-input" placeholder="you@example.com" required />
+      </div>
+      <div class="mb-6">
+        <label class="label">Password</label>
+        <input type="password" id="login-password" class="glass-input" placeholder="Enter your password" required />
+      </div>
+      <button type="submit" class="btn-primary" id="login-btn">Sign In</button>
+    </form>
+
+    <!-- Signup Form -->
+    <form id="signup-form" style="display:none;" onsubmit="handleSignup(event)">
+      <div class="mb-4">
+        <label class="label">Full Name</label>
+        <input type="text" id="signup-name" class="glass-input" placeholder="Muhammad Ali" required />
+      </div>
+      <div class="mb-4">
+        <label class="label">Email Address</label>
+        <input type="email" id="signup-email" class="glass-input" placeholder="you@example.com" required />
+      </div>
+      <div class="mb-4">
+        <label class="label">Password</label>
+        <input type="password" id="signup-password" class="glass-input" placeholder="Min. 6 characters" required minlength="6" />
+      </div>
+      <div class="mb-6">
+        <label class="label">Role</label>
+        <select id="signup-role" class="glass-input" required>
+          <option value="labour">Labour (Worker)</option>
+          <option value="admin">Admin (Owner/Manager)</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-primary" id="signup-btn">Create Account</button>
+    </form>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth,
+      browserSessionPersistence,
+      setPersistence,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // ─── Firebase Init ────────────────────────────────────────────
+    const firebaseConfig = {
+      apiKey: "AIzaSyAtgPc7BfOZpBtVNwVmy2qjVR5KGf1uDxA",
+      authDomain: "labourmanagement-4c5d3.firebaseapp.com",
+      projectId: "labourmanagement-4c5d3",
+      storageBucket: "labourmanagement-4c5d3.firebasestorage.app",
+      messagingSenderId: "603898201221",
+      appId: "1:603898201221:web:5057502261403033da55ec",
+      measurementId: "G-LRVKVFHMBK"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    setPersistence(auth, browserSessionPersistence).catch(err => console.error("Persistence error:", err));
+
+
+    const connEl = document.getElementById("conn-status");
+
+    // ─── Connection check ────────────────────────────────────────
+    (async () => {
+      try {
+        await getDoc(doc(db, "_ping", "test")).catch(() => {});
+        connEl.textContent = "✅ Connected";
+        connEl.className = "connected";
+      } catch (e) {
+        connEl.textContent = "❌ Connection Error";
+        connEl.className = "error";
+        console.error("Firebase connection failed:", e);
+      }
+    })();
+
+    // ─── Auth State Guard ────────────────────────────────────────
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const snap = await getDoc(doc(db, "users", user.uid));
+          if (snap.exists()) {
+            const role = snap.data().role;
+            if (role === "admin") window.location.href = "/admin.html";
+            else if (role === "labour") window.location.href = "/labour.html";
+          }
+        } catch (e) {
+          console.error("Role check error:", e);
+        }
+      }
+    });
+
+    // ─── Tab Switcher ────────────────────────────────────────────
+    window.switchTab = function(tab) {
+      const loginForm = document.getElementById("login-form");
+      const signupForm = document.getElementById("signup-form");
+      const tabLogin = document.getElementById("tab-login");
+      const tabSignup = document.getElementById("tab-signup");
+      if (tab === "login") {
+        loginForm.style.display = "block";
+        signupForm.style.display = "none";
+        tabLogin.classList.add("active");
+        tabSignup.classList.remove("active");
+      } else {
+        loginForm.style.display = "none";
+        signupForm.style.display = "block";
+        tabLogin.classList.remove("active");
+        tabSignup.classList.add("active");
+      }
+    };
+
+    // ─── Toast Notification ──────────────────────────────────────
+    window.showToast = function(msg, type = "info") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      toast.className = `toast ${type}`;
+      const icons = { success: "✅", error: "❌", info: "ℹ️" };
+      toast.textContent = (icons[type] || "") + " " + msg;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add("dismiss");
+        setTimeout(() => toast.remove(), 350);
+      }, 3000);
+    };
+
+    // ─── Friendly Auth Error Messages ────────────────────────────
+    function getFriendlyError(error) {
+      const code = error?.code || error;
+      const map = {
+        "auth/user-not-found": "No account found with this email.",
+        "auth/wrong-password": "Incorrect password. Please try again.",
+        "auth/invalid-email": "Please enter a valid email address.",
+        "auth/email-already-in-use": "This email is already registered.",
+        "auth/weak-password": "Password must be at least 6 characters.",
+        "auth/too-many-requests": "Too many attempts. Please wait a moment.",
+        "auth/network-request-failed": "Network error. Check your connection.",
+        "auth/invalid-credential": "Invalid email or password.",
+      };
+      return map[code] || error.message || "Something went wrong. Please try again.";
+    }
+
+    // ─── Login Handler ───────────────────────────────────────────
+    window.handleLogin = async function(e) {
+      e.preventDefault();
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+      const btn = document.getElementById("login-btn");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Signing in...';
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        const snap = await getDoc(doc(db, "users", cred.user.uid));
+        if (!snap.exists()) {
+          showToast("Account data not found. Contact admin.", "error");
+          btn.disabled = false; btn.textContent = "Sign In"; return;
+        }
+        const userData = snap.data();
+        showToast("Welcome back, " + userData.name + "! 👋", "success");
+        setTimeout(() => {
+          if (userData.role === "admin") window.location.href = "/admin.html";
+          else window.location.href = "/labour.html";
+        }, 800);
+      } catch (err) {
+        console.error("Auth Error:", err);
+        alert(err.message);
+        showToast(getFriendlyError(err), "error");
+        btn.disabled = false; btn.textContent = "Sign In";
+      }
+    };
+
+    // ─── Signup Handler ──────────────────────────────────────────
+    window.handleSignup = async function(e) {
+      e.preventDefault();
+      const name = document.getElementById("signup-name").value.trim();
+      const email = document.getElementById("signup-email").value.trim();
+      const password = document.getElementById("signup-password").value;
+      const role = document.getElementById("signup-role").value;
+      const btn = document.getElementById("signup-btn");
+      if (!name) { showToast("Please enter your full name.", "error"); return; }
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Creating account...';
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await setDoc(doc(db, "users", cred.user.uid), {
+          uid: cred.user.uid, name, email, role, dailyRate: 0
+        });
+        showToast("Account created! Welcome, " + name + " 🎉", "success");
+        setTimeout(() => {
+          if (role === "admin") window.location.href = "/admin.html";
+          else window.location.href = "/labour.html";
+        }, 800);
+      } catch (err) {
+        console.error("Auth Error:", err);
+        alert(err.message);
+        showToast(getFriendlyError(err), "error");
+        btn.disabled = false; btn.textContent = "Create Account";
+      }
+    };
+  </script>
+</body>
+</html>

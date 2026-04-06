@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — Labour Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'Inter', system-ui, sans-serif; box-sizing: border-box; }
+
+    html, body { height: 100%; margin: 0; overflow: hidden; }
+
+    body {
+      background: linear-gradient(135deg, #071826 0%, #0B2A3A 60%, #071320 100%);
+      color: #EAF0F7;
+      display: flex;
+    }
+
+    /* Scrollable content areas */
+    .content-scrollable {
+      overflow-y: auto;
+      flex: 1;
+      padding: 1.5rem;
+    }
+    .content-scrollable::-webkit-scrollbar { width: 5px; }
+    .content-scrollable::-webkit-scrollbar-track { background: transparent; }
+    .content-scrollable::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+
+    /* SIDEBAR */
+    #sidebar {
+      width: 240px;
+      min-width: 240px;
+      background: rgba(255,255,255,0.05);
+      border-right: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 0;
+      transition: transform 0.3s ease;
+      overflow-y: auto;
+      z-index: 100;
+    }
+    @media (max-width: 768px) {
+      #sidebar {
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        transform: translateX(-100%);
+        box-shadow: 4px 0 30px rgba(0,0,0,0.5);
+      }
+      #sidebar.open { transform: translateX(0); }
+      #main-content { margin-left: 0 !important; }
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0 1.25rem 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      margin-bottom: 1rem;
+    }
+    .sidebar-logo-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, #0B84FF, #22D3EE);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .sidebar-logo-text { font-size: 0.9rem; font-weight: 700; color: #EAF0F7; line-height: 1.2; }
+    .sidebar-logo-sub { font-size: 0.7rem; color: #9AA8B6; font-weight: 400; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1.25rem;
+      margin: 0.15rem 0.75rem;
+      border-radius: 10px;
+      cursor: pointer;
+      color: #9AA8B6;
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+    .nav-item:hover {
+      color: #EAF0F7;
+      background: rgba(255,255,255,0.06);
+    }
+    .nav-item.active {
+      color: #EAF0F7;
+      background: rgba(11,132,255,0.18);
+      border-color: rgba(11,132,255,0.3);
+      box-shadow: 0 0 12px rgba(11,132,255,0.15);
+    }
+    .nav-icon { font-size: 1.1rem; width: 22px; text-align: center; flex-shrink: 0; }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      padding: 1rem 0.75rem 0;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+
+    /* MAIN CONTENT */
+    #main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    /* TOP BAR */
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(10px);
+      flex-shrink: 0;
+    }
+
+    /* GLASS CARD */
+    .glass-card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.11);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      transition: all 0.25s ease;
+    }
+    .glass-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(255,255,255,0.18);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.4);
+    }
+
+    /* KPI CARDS */
+    .kpi-card { padding: 1.25rem 1.5rem; }
+    .kpi-label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: #9AA8B6; margin-bottom: 0.5rem; }
+    .kpi-value { font-size: 2.25rem; font-weight: 800; line-height: 1; margin-bottom: 0.5rem; }
+    .kpi-sub { font-size: 0.8rem; color: #9AA8B6; }
+    .kpi-icon { font-size: 1.5rem; opacity: 0.8; }
+
+    /* SVG Ring */
+    .ring-container { position: relative; width: 64px; height: 64px; }
+    .ring-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 5; }
+    .ring-progress { fill: none; stroke-width: 5; stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; transition: stroke-dashoffset 1.5s ease; }
+
+    /* TABLE */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th {
+      text-align: left; padding: 0.75rem 1rem;
+      font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em;
+      text-transform: uppercase; color: #9AA8B6;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .data-table td {
+      padding: 0.875rem 1rem;
+      font-size: 0.875rem; color: #EAF0F7;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      vertical-align: middle;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover td { background: rgba(255,255,255,0.03); }
+
+    /* Avatar */
+    .avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.875rem; flex-shrink: 0;
+      background: linear-gradient(135deg, #0B84FF, #22D3EE);
+      color: white;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      background: linear-gradient(135deg, #0B84FF, #0066CC);
+      color: #fff; border: none; border-radius: 50px;
+      padding: 0.5rem 1.25rem; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s ease;
+      box-shadow: 0 3px 12px rgba(11,132,255,0.3);
+    }
+    .btn-primary:hover { transform: scale(1.03); box-shadow: 0 5px 18px rgba(11,132,255,0.5); }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.08); color: #EAF0F7;
+      border: 1px solid rgba(255,255,255,0.12); border-radius: 50px;
+      padding: 0.45rem 1rem; font-size: 0.8rem; font-weight: 500;
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.14); }
+
+    .btn-danger {
+      background: rgba(239,68,68,0.15); color: #FCA5A5;
+      border: 1px solid rgba(239,68,68,0.3); border-radius: 50px;
+      padding: 0.45rem 1rem; font-size: 0.8rem; font-weight: 500;
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .btn-danger:hover { background: rgba(239,68,68,0.25); }
+
+    .btn-warn {
+      background: rgba(245,158,11,0.15); color: #FCD34D;
+      border: 1px solid rgba(245,158,11,0.3); border-radius: 50px;
+      padding: 0.45rem 1rem; font-size: 0.8rem; font-weight: 500;
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .btn-warn:hover { background: rgba(245,158,11,0.25); }
+
+    /* Logout */
+    .btn-logout {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.7rem 1rem; border-radius: 10px; width: 100%;
+      background: rgba(239,68,68,0.1); color: #FCA5A5;
+      border: 1px solid rgba(239,68,68,0.2);
+      cursor: pointer; font-size: 0.875rem; font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .btn-logout:hover { background: rgba(239,68,68,0.2); }
+
+    /* Inputs */
+    .glass-input {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px; color: #EAF0F7;
+      padding: 0.6rem 0.875rem; font-size: 0.875rem;
+      outline: none; transition: all 0.2s ease;
+    }
+    .glass-input::placeholder { color: #6B7A8A; }
+    .glass-input:focus {
+      border-color: rgba(34,211,238,0.5);
+      box-shadow: 0 0 0 3px rgba(34,211,238,0.1);
+    }
+    .glass-input option { background: #0B2A3A; color: #EAF0F7; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 1rem;
+      animation: fadeIn 0.2s ease;
+    }
+    .modal-box {
+      background: rgba(11,32,48,0.95);
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 20px;
+      padding: 2rem;
+      width: 100%; max-width: 480px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+      animation: modalIn 0.25s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-box::-webkit-scrollbar { width: 4px; }
+    .modal-box::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+    /* Toast */
+    #toast-container {
+      position: fixed; top: 1rem; right: 1rem;
+      z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem;
+      pointer-events: none;
+    }
+    .toast {
+      padding: 0.75rem 1.1rem; border-radius: 10px; font-size: 0.875rem;
+      font-weight: 500; color: #EAF0F7;
+      backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      animation: toastIn 0.3s ease; min-width: 220px; pointer-events: auto;
+    }
+    .toast.success { background: rgba(16,185,129,0.25); border-color: rgba(16,185,129,0.35); }
+    .toast.error { background: rgba(239,68,68,0.25); border-color: rgba(239,68,68,0.35); }
+    .toast.info { background: rgba(11,132,255,0.25); border-color: rgba(11,132,255,0.35); }
+    @keyframes toastIn { from { opacity:0; transform: translateX(30px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes toastOut { from { opacity:1; } to { opacity:0; transform: translateX(30px); } }
+    .toast.dismiss { animation: toastOut 0.3s ease forwards; }
+
+    /* Section */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* Page slide */
+    .section.active { animation: slideUp 0.35s ease; }
+    @keyframes slideUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+
+    /* Badge */
+    .badge {
+      padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.7rem; font-weight: 600;
+    }
+    .badge-green { background: rgba(16,185,129,0.2); color: #6EE7B7; border: 1px solid rgba(16,185,129,0.3); }
+    .badge-blue { background: rgba(11,132,255,0.2); color: #93C5FD; border: 1px solid rgba(11,132,255,0.3); }
+    .badge-red { background: rgba(239,68,68,0.2); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.3); }
+
+    /* Inline wage input row */
+    .wage-row { display: flex; align-items: center; gap: 0.5rem; }
+    .wage-input { width: 80px; text-align: center; }
+
+    /* Mobile topbar hamburger */
+    #hamburger { display: none; cursor: pointer; padding: 0.5rem; border-radius: 8px; background: rgba(255,255,255,0.08); border: none; color: #EAF0F7; }
+    @media (max-width: 768px) { #hamburger { display: flex; align-items: center; justify-content: center; } }
+
+    /* Overlay for mobile sidebar */
+    #sidebar-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 99;
+    }
+    #sidebar-overlay.show { display: block; }
+  </style>
+</head>
+<body>
+  <div id="toast-container"></div>
+
+  <!-- Mobile sidebar overlay -->
+  <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">
+        <svg width="22" height="22" fill="none" viewBox="0 0 28 28">
+          <path d="M6 22L14 6L22 22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8.5 17H19.5" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="sidebar-logo-text">Labour Mgmt</div>
+        <div class="sidebar-logo-sub">Admin Panel</div>
+      </div>
+    </div>
+
+    <div onclick="showSection('dashboard')" class="nav-item active" id="nav-dashboard">
+      <span class="nav-icon">📊</span>
+      Dashboard
+    </div>
+    <div onclick="showSection('labour')" class="nav-item" id="nav-labour">
+      <span class="nav-icon">👷</span>
+      Labour
+    </div>
+    <div onclick="showSection('attendance')" class="nav-item" id="nav-attendance">
+      <span class="nav-icon">📅</span>
+      Attendance
+    </div>
+    <div onclick="showSection('advances')" class="nav-item" id="nav-advances">
+      <span class="nav-icon">💰</span>
+      Advances
+    </div>
+
+    <div class="sidebar-bottom">
+      <div style="padding: 0 0.5rem 0.75rem; color:#9AA8B6; font-size:0.75rem;">
+        Logged in as <span id="admin-name-sidebar" style="color:#22D3EE; font-weight:600;">Admin</span>
+      </div>
+      <button class="btn-logout" onclick="handleLogout()">
+        <span>🚪</span> Logout
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div id="main-content">
+    <!-- TOP BAR -->
+    <div id="topbar">
+      <div style="display:flex; align-items:center; gap:0.75rem;">
+        <button id="hamburger" onclick="openSidebar()">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M3 6h18M3 12h18M3 18h18" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <h1 id="page-title" style="font-size:1.25rem; font-weight:700; color:#EAF0F7;">Dashboard</h1>
+      </div>
+      <div style="display:flex; align-items:center; gap:0.75rem;">
+        <div class="avatar" id="admin-avatar">A</div>
+        <span id="admin-name-top" style="font-weight:600; font-size:0.9rem; color:#EAF0F7;">Admin</span>
+      </div>
+    </div>
+
+    <!-- SCROLLABLE AREA -->
+    <div class="content-scrollable" id="content-area">
+
+      <!-- ═══════════ DASHBOARD SECTION ═══════════ -->
+      <div class="section active" id="section-dashboard">
+        <!-- KPI CARDS -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem; margin-bottom:1.5rem;">
+          <!-- Total Labour -->
+          <div class="glass-card kpi-card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <div class="kpi-label">Total Labour</div>
+                <div class="kpi-value" id="kpi-labour" style="color:#22D3EE;">0</div>
+                <div class="kpi-sub">Registered workers</div>
+              </div>
+              <div class="kpi-icon">👷</div>
+            </div>
+          </div>
+
+          <!-- Attendance with SVG Ring -->
+          <div class="glass-card kpi-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div class="kpi-label">Today's Present</div>
+                <div class="kpi-value" id="kpi-attendance" style="color:#10B981;">0</div>
+                <div class="kpi-sub" id="kpi-att-sub">Present today</div>
+              </div>
+              <div class="ring-container">
+                <svg viewBox="0 0 64 64" width="64" height="64">
+                  <circle cx="32" cy="32" r="27" class="ring-bg"/>
+                  <circle cx="32" cy="32" r="27" class="ring-progress" id="ring-prog"
+                    stroke="#10B981" stroke-dasharray="169.6" stroke-dashoffset="169.6"/>
+                </svg>
+                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#10B981;" id="ring-pct">0%</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Advance -->
+          <div class="glass-card kpi-card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <div class="kpi-label">Total Advance</div>
+                <div class="kpi-value" id="kpi-advance" style="color:#A855F7;">₹0</div>
+                <div class="kpi-sub">Amount paid out</div>
+              </div>
+              <div class="kpi-icon">💸</div>
+            </div>
+          </div>
+
+          <!-- Remaining Salary -->
+          <div class="glass-card kpi-card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <div class="kpi-label">Total Salaries</div>
+                <div class="kpi-value" id="kpi-salary" style="color:#F59E0B;">₹0</div>
+                <div class="kpi-sub">Gross (before deduction)</div>
+              </div>
+              <div class="kpi-icon">💼</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick summary table with Today Status -->
+        <div class="glass-card" style="padding:1.25rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+            <div style="font-size:0.9rem;font-weight:700;color:#EAF0F7;">📋 Labour Overview — <span id="overview-filter-label">Today's Workers</span></div>
+            <div style="display:flex;align-items:center;gap:0.5rem;"><button id="toggle-all-btn" onclick="toggleOverviewFilter()" class="btn-secondary" style="padding:0.25rem 0.75rem;font-size:0.72rem;">Show All</button><div id="today-date-badge" style="font-size:0.75rem;color:#9AA8B6;background:rgba(255,255,255,0.06);padding:0.25rem 0.75rem;border-radius:50px;border:1px solid rgba(255,255,255,0.1);"></div></div>
+          </div>
+          <div id="dashboard-summary-table">
+            <div style="text-align:center;padding:2rem;color:#9AA8B6;">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════ LABOUR SECTION ═══════════ -->
+      <div class="section" id="section-labour">
+        <div class="glass-card" style="padding:1.25rem;">
+          <div style="font-size:0.9rem;font-weight:700;color:#EAF0F7;margin-bottom:1rem;">👷 Labour List</div>
+          <div id="labour-table-container">
+            <div style="text-align:center;padding:2rem;color:#9AA8B6;">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════ ATTENDANCE SECTION ═══════════ -->
+      <div class="section" id="section-attendance">
+        <div class="glass-card" style="padding:1.25rem;">
+          <div style="font-size:0.9rem;font-weight:700;color:#EAF0F7;margin-bottom:1rem;">📅 All Attendance Records</div>
+          <div id="attendance-table-container">
+            <div style="text-align:center;padding:2rem;color:#9AA8B6;">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════ ADVANCES SECTION ═══════════ -->
+      <div class="section" id="section-advances">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+          <div style="font-size:1rem;font-weight:700;color:#EAF0F7;">💰 Advances Management</div>
+          <button class="btn-primary" onclick="openAddAdvanceModal()">+ Add Advance</button>
+        </div>
+        <div class="glass-card" style="padding:1.25rem;">
+          <div id="advances-table-container">
+            <div style="text-align:center;padding:2rem;color:#9AA8B6;">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:1.5rem;"></div>
+    </div><!-- end content-scrollable -->
+  </div><!-- end main-content -->
+
+  <!-- ═══════════ ADD / EDIT ADVANCE MODAL ═══════════ -->
+  <div class="modal-overlay" id="advance-modal" style="display:none;">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+        <h2 id="advance-modal-title" style="font-size:1.1rem;font-weight:700;color:#EAF0F7;">Add Advance</h2>
+        <button onclick="closeAdvanceModal()" style="background:rgba(255,255,255,0.08);border:none;color:#9AA8B6;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:1rem;">&times;</button>
+      </div>
+
+      <input type="hidden" id="advance-edit-id" value="" />
+
+      <div style="margin-bottom:1rem;">
+        <label style="color:#9AA8B6;font-size:0.78rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;display:block;margin-bottom:0.4rem;">Select Labour</label>
+        <select id="advance-labour-select" class="glass-input" style="width:100%;"></select>
+      </div>
+      <div style="margin-bottom:1rem;">
+        <label style="color:#9AA8B6;font-size:0.78rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;display:block;margin-bottom:0.4rem;">Amount (₹)</label>
+        <input type="number" id="advance-amount" class="glass-input" style="width:100%;" placeholder="e.g. 500" min="1" />
+      </div>
+      <div style="margin-bottom:1.5rem;">
+        <label style="color:#9AA8B6;font-size:0.78rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;display:block;margin-bottom:0.4rem;">Date</label>
+        <input type="date" id="advance-date" class="glass-input" style="width:100%;" />
+      </div>
+
+      <div style="display:flex;gap:0.75rem;justify-content:flex-end;">
+        <button onclick="closeAdvanceModal()" class="btn-secondary">Cancel</button>
+        <button onclick="saveAdvance()" class="btn-primary" id="save-advance-btn">Save Advance</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ LABOUR DETAIL MODAL ═══════════ -->
+  <div class="modal-overlay" id="detail-modal" style="display:none;">
+    <div class="modal-box" onclick="event.stopPropagation()" style="max-width:560px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+        <h2 style="font-size:1.1rem;font-weight:700;color:#EAF0F7;">Labour Details</h2>
+        <button onclick="closeDetailModal()" style="background:rgba(255,255,255,0.08);border:none;color:#9AA8B6;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:1rem;">&times;</button>
+      </div>
+      <div id="detail-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ DELETE CONFIRM MODAL ═══════════ -->
+  <div class="modal-overlay" id="delete-modal" style="display:none;">
+    <div class="modal-box" onclick="event.stopPropagation()" style="max-width:380px;text-align:center;">
+      <div style="font-size:2.5rem;margin-bottom:1rem;">⚠️</div>
+      <h2 style="color:#EAF0F7;font-weight:700;margin-bottom:0.5rem;">Delete Advance?</h2>
+      <p style="color:#9AA8B6;font-size:0.9rem;margin-bottom:1.5rem;">This action cannot be undone.</p>
+      <div style="display:flex;gap:0.75rem;justify-content:center;">
+        <button onclick="closeDeleteModal()" class="btn-secondary">Cancel</button>
+        <button onclick="confirmDelete()" class="btn-danger" style="border-radius:50px;padding:0.5rem 1.25rem;">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import {
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      collection,
+      query,
+      where,
+      getDocs,
+      addDoc,
+      updateDoc,
+      deleteDoc,
+      doc,
+      getDoc,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // ─── State ───────────────────────────────────────────────────
+    let currentUser = null;
+    let allLabour = [];        // All labour users from Firestore
+    let allAttendance = [];    // All attendance records (real-time)
+    let allAdvances = [];      // All advance records (real-time)
+    let deleteTargetId = null;
+
+    // Unsubscribe handles for real-time listeners
+    let unsubAttendance = null;
+    let unsubAdvances = null;
+
+    // Today's date in YYYY-MM-DD format (used for "Today Status")
+    // Always compute today fresh — dashboard auto-resets at midnight each day
+    function getTodayDate() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    // ─── Helpers ─────────────────────────────────────────────────
+    function showToast(msg, type = "info") {
+      const c = document.getElementById("toast-container");
+      const t = document.createElement("div");
+      t.className = `toast ${type}`;
+      const icons = { success:"✅", error:"❌", info:"ℹ️" };
+      t.textContent = (icons[type] || "") + " " + msg;
+      c.appendChild(t);
+      setTimeout(() => { t.classList.add("dismiss"); setTimeout(() => t.remove(), 350); }, 3000);
+    }
+
+    function initials(name) {
+      return (name || "?").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+    }
+
+    function fmtDate(d) {
+      if (!d) return "—";
+      return new Date(d).toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" });
+    }
+
+    function formatRupee(n) {
+      return "₹" + Number(n || 0).toLocaleString("en-IN");
+    }
+
+    // ─── Animated Counter ────────────────────────────────────────
+    function animateCounter(elId, target, prefix = "", duration = 1200) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      const start = performance.now();
+      const targetNum = typeof target === "number" ? target : parseFloat(target) || 0;
+      function update(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        const current = Math.floor(ease * targetNum);
+        el.textContent = prefix + (prefix.includes("₹") ? current.toLocaleString("en-IN") : current);
+        if (progress < 1) requestAnimationFrame(update);
+        else el.textContent = prefix + (prefix.includes("₹") ? targetNum.toLocaleString("en-IN") : targetNum);
+      }
+      requestAnimationFrame(update);
+    }
+
+    // ─── SVG Ring ────────────────────────────────────────────────
+    function animateRing(pct) {
+      const circumference = 169.6;
+      const offset = circumference - (pct / 100) * circumference;
+      const ring = document.getElementById("ring-prog");
+      const label = document.getElementById("ring-pct");
+      if (ring) ring.style.strokeDashoffset = offset;
+      if (label) label.textContent = Math.round(pct) + "%";
+    }
+
+    // ─── Sidebar ─────────────────────────────────────────────────
+    window.openSidebar = () => {
+      document.getElementById("sidebar").classList.add("open");
+      document.getElementById("sidebar-overlay").classList.add("show");
+    };
+    window.closeSidebar = () => {
+      document.getElementById("sidebar").classList.remove("open");
+      document.getElementById("sidebar-overlay").classList.remove("show");
+    };
+
+    // ─── Section navigation ──────────────────────────────────────
+    const sectionTitles = { dashboard:"Dashboard", labour:"Labour", attendance:"Attendance", advances:"Advances" };
+
+    window.showSection = function(name) {
+      document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+      document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+      document.getElementById("section-" + name).classList.add("active");
+      document.getElementById("nav-" + name).classList.add("active");
+      document.getElementById("page-title").textContent = sectionTitles[name];
+      closeSidebar();
+
+      if (name === "dashboard") loadDashboard();
+      else if (name === "labour") renderLabourTable();
+      else if (name === "attendance") renderAttendanceTable();
+      else if (name === "advances") renderAdvancesTable();
+    };
+
+    // ─── Auth Guard ──────────────────────────────────────────────
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { window.location.href = "index.html"; return; }
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (!snap.exists() || snap.data().role !== "admin") {
+          window.location.href = "index.html";
+          return;
+        }
+        currentUser = { uid: user.uid, ...snap.data() };
+        document.getElementById("admin-name-sidebar").textContent = currentUser.name;
+        document.getElementById("admin-name-top").textContent = currentUser.name;
+        document.getElementById("admin-avatar").textContent = initials(currentUser.name);
+
+        // Set today's date badge
+        const todayFormatted = new Date().toLocaleDateString("en-IN", { weekday:"short", day:"2-digit", month:"short", year:"numeric" });
+        const badge = document.getElementById("today-date-badge");
+        if (badge) badge.textContent = "📅 Today: " + todayFormatted;
+
+        // Fetch static labour list once, then set up real-time for attendance/advances
+        await fetchLabour();
+        setupRealtimeListeners();
+      } catch (e) {
+        console.error("Auth check failed:", e);
+        window.location.href = "index.html";
+      }
+    });
+
+    // ─── Fetch Labour (static, one-time) ─────────────────────────
+    async function fetchLabour() {
+      try {
+        const labourSnap = await getDocs(query(collection(db, "users"), where("role", "==", "labour")));
+        allLabour = labourSnap.docs.map(d => ({ id: d.id, uid: d.id, ...d.data() }));
+        console.log(`Loaded: ${allLabour.length} labourers`);
+      } catch (e) {
+        console.error("Labour fetch error:", e);
+        showToast("Failed to load labour list.", "error");
+      }
+    }
+
+    // ─── Real-time Listeners (onSnapshot) ────────────────────────
+    // Admin listens to ALL attendance and advances records
+    // Each record has userId for per-user grouping — data is NEVER mixed
+    function setupRealtimeListeners() {
+      // Listen to ALL attendance records (admin sees all)
+      unsubAttendance = onSnapshot(
+        collection(db, "attendance"),
+        (snapshot) => {
+          allAttendance = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          console.log(`Real-time: ${allAttendance.length} attendance records`);
+          loadDashboard();
+          if (document.getElementById("section-attendance").classList.contains("active")) {
+            renderAttendanceTable();
+          }
+        },
+        (err) => {
+          console.error("Attendance listener error:", err);
+          showToast("Error loading attendance.", "error");
+        }
+      );
+
+      // Listen to ALL advances records (admin sees all)
+      unsubAdvances = onSnapshot(
+        collection(db, "advances"),
+        (snapshot) => {
+          allAdvances = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          console.log(`Real-time: ${allAdvances.length} advance records`);
+          loadDashboard();
+          if (document.getElementById("section-advances").classList.contains("active")) {
+            renderAdvancesTable();
+          }
+        },
+        (err) => {
+          console.error("Advances listener error:", err);
+          showToast("Error loading advances.", "error");
+        }
+      );
+    }
+
+    // ─── Per-user helpers (strict data grouping by userId) ────────
+    // Supports both new records (userId) and old records (labourId) for backward compat
+    function getAttendanceForUser(uid) {
+      return allAttendance.filter(a => a.userId === uid || a.labourId === uid);
+    }
+
+    function getAdvancesForUser(uid) {
+      return allAdvances.filter(a => a.userId === uid || a.labourId === uid);
+    }
+
+    // Returns true if the user has an attendance record for the given date (defaults to today)
+    // Always uses fresh date — dashboard auto-resets each new day without any manual action
+    function isPresentToday(uid, dateStr) {
+      const checkDate = dateStr || new Date().toISOString().slice(0, 10);
+      return allAttendance.some(
+        a => (a.userId === uid || a.labourId === uid) && a.date === checkDate
+      );
+    }
+
+    // ─── Overview Filter State ───────────────────────────────────
+    let showAllWorkers = false;
+    window.toggleOverviewFilter = function() {
+      showAllWorkers = !showAllWorkers;
+      const btn = document.getElementById("toggle-all-btn");
+      const label = document.getElementById("overview-filter-label");
+      if (btn) btn.textContent = showAllWorkers ? "Show Today Only" : "Show All";
+      if (label) label.textContent = showAllWorkers ? "All Workers" : "Today's Workers";
+      renderDashboardTable();
+    };
+
+    // ─── Dashboard ───────────────────────────────────────────────
+    function loadDashboard() {
+      // Always recompute today's date fresh (auto daily-reset — no manual action needed)
+      const freshToday = new Date().toISOString().slice(0, 10);
+
+      // Today-only attendance count (for KPI card & ring)
+      const todayAttendance = allAttendance.filter(
+        a => a.date === freshToday
+      );
+      const todayPresentCount = todayAttendance.length;
+
+      const totalAdv = allAdvances.reduce((s, a) => s + Number(a.amount || 0), 0);
+      let totalSalary = 0;
+      allLabour.forEach(l => {
+        totalSalary += Number(l.fixedSalary || 0);
+      });
+
+      // Ring = today's present workers / total registered labour
+      const attPct = allLabour.length > 0
+        ? Math.min(100, (todayPresentCount / allLabour.length) * 100)
+        : 0;
+
+      animateCounter("kpi-labour", allLabour.length);
+      // Show today's present count — resets automatically each new day
+      animateCounter("kpi-attendance", todayPresentCount);
+      const subEl = document.getElementById("kpi-att-sub");
+      if (subEl) subEl.textContent = todayPresentCount + " of " + allLabour.length + " present today";
+      animateCounter("kpi-advance", totalAdv, "₹");
+      animateCounter("kpi-salary", totalSalary, "₹");
+      animateRing(attPct);
+
+      renderDashboardTable();
+    }
+
+    // ─── Render Dashboard Table (daily-based filter) ─────────────
+    // By default shows ONLY today's present workers
+    // Toggle via showAllWorkers flag — no data is ever deleted, just filtered
+    function renderDashboardTable() {
+      const freshToday = new Date().toISOString().slice(0, 10);
+      const container = document.getElementById("dashboard-summary-table");
+
+      if (allLabour.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:2rem;color:#9AA8B6;">No labour registered yet.</div>';
+        return;
+      }
+
+      // Filter: if showAllWorkers=false → show only workers present today
+      // Old data is NEVER deleted — we only filter what's displayed
+      let displayLabour = allLabour;
+      if (!showAllWorkers) {
+        displayLabour = allLabour.filter(l => isPresentToday(l.uid, freshToday));
+      }
+
+      if (displayLabour.length === 0) {
+        container.innerHTML = `<div style="text-align:center;padding:2rem;color:#9AA8B6;">
+          No workers present today yet.<br>
+          <span style="font-size:0.8rem;opacity:0.7;">Click "Show All" to see all registered workers.</span>
+        </div>`;
+        return;
+      }
+
+      const rows = displayLabour.map(l => {
+        const attRecords = getAttendanceForUser(l.uid);
+        const advRecords = getAdvancesForUser(l.uid);
+        const daysWorked = attRecords.length;
+        const totalAdvUser = advRecords.reduce((s, a) => s + Number(a.amount || 0), 0);
+        const grossSalary = Number(l.fixedSalary || 0);
+        const remaining = grossSalary - totalAdvUser;
+        const presentToday = isPresentToday(l.uid, freshToday);
+        const todayBadge = presentToday
+          ? `<span class="badge badge-green">✅ Present</span>`
+          : `<span class="badge badge-red">❌ Absent</span>`;
+
+        return `
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:0.625rem;">
+                <div class="avatar" style="width:32px;height:32px;font-size:0.75rem;">${initials(l.name)}</div>
+                <div>
+                  <div style="font-weight:600;">${l.name}</div>
+                  <div style="font-size:0.72rem;color:#9AA8B6;">${l.email || ""}</div>
+                </div>
+              </div>
+            </td>
+            <td style="color:#22D3EE;font-weight:600;">${formatRupee(l.dailyRate || 0)}</td>
+            <td><span class="badge badge-blue">${daysWorked} days</span></td>
+            <td style="color:#F59E0B;font-weight:700;">${formatRupee(grossSalary)}</td>
+            <td style="color:#FCA5A5;font-weight:600;">${formatRupee(totalAdvUser)}</td>
+            <td style="color:${remaining >= 0 ? '#6EE7B7' : '#FCA5A5'};font-weight:700;">${formatRupee(remaining)}</td>
+            <td>${todayBadge}</td>
+            <td>
+              <button class="btn-secondary" onclick="openDetailModal('${l.uid}')" style="padding:0.35rem 0.875rem;font-size:0.78rem;">Details</button>
+            </td>
+          </tr>`;
+      }).join("");
+
+      container.innerHTML = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Daily Rate (₹)</th>
+              <th>Days Worked</th>
+              <th>Gross Salary (₹)</th>
+              <th>Advance</th>
+              <th>Remaining</th>
+              <th>Today Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    }
+
+    // ─── Labour Table ────────────────────────────────────────────
+    function renderLabourTable() {
+      const container = document.getElementById("labour-table-container");
+      if (allLabour.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:2rem;color:#9AA8B6;">No labour found.</div>';
+        return;
+      }
+
+      const rows = allLabour.map(l => `
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:0.625rem;">
+              <div class="avatar" style="width:32px;height:32px;font-size:0.75rem;">${initials(l.name)}</div>
+              <div>
+                <div style="font-weight:500;">${l.name}</div>
+                <div style="font-size:0.75rem;color:#9AA8B6;">${l.email}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <input type="number" class="glass-input wage-input" id="wage-${l.uid}"
+              value="${l.dailyRate || 0}" min="0" placeholder="0" />
+          </td>
+          <td>
+            <input type="number" class="glass-input wage-input" id="salary-${l.uid}"
+              value="${l.fixedSalary || 0}" min="0" placeholder="0" style="width:100px;" />
+          </td>
+          <td>
+            <div style="display:flex;gap:0.5rem;">
+              <button class="btn-secondary" onclick="updateLabourRates('${l.uid}')" style="padding:0.35rem 0.75rem;font-size:0.78rem;">💾 Save</button>
+              <button class="btn-primary" onclick="openDetailModal('${l.uid}')" style="padding:0.35rem 0.75rem;font-size:0.78rem;">Details</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+
+      container.innerHTML = `
+        <table class="data-table">
+          <thead>
+            <tr><th>Labour</th><th>Daily Rate (₹)</th><th>Gross Salary (₹)</th><th>Actions</th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    }
+
+    // ─── Attendance Table ─────────────────────────────────────────
+    function renderAttendanceTable() {
+      const container = document.getElementById("attendance-table-container");
+      if (allAttendance.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:2rem;color:#9AA8B6;">No attendance records yet.</div>';
+        return;
+      }
+
+      const sorted = [...allAttendance].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+      const rows = sorted.map(a => {
+        const uid = a.userId || a.labourId;
+        const labour = allLabour.find(l => l.uid === uid);
+        const displayName = a.name || labour?.name || '<span style="color:#9AA8B6;">Unknown</span>';
+        return `
+          <tr>
+            <td>${fmtDate(a.date)}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:0.5rem;">
+                <div class="avatar" style="width:28px;height:28px;font-size:0.7rem;">${initials(labour?.name || displayName)}</div>
+                ${displayName}
+              </div>
+            </td>
+            <td><span class="badge badge-green">${a.status || "present"}</span></td>
+          </tr>`;
+      }).join("");
+
+      container.innerHTML = `
+        <table class="data-table">
+          <thead><tr><th>Date</th><th>Labour</th><th>Status</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    }
+
+    // ─── Advances Table ───────────────────────────────────────────
+    function renderAdvancesTable() {
+      const container = document.getElementById("advances-table-container");
+      if (allAdvances.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:2rem;color:#9AA8B6;">No advances recorded yet.</div>';
+        return;
+      }
+
+      const sorted = [...allAdvances].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+      const rows = sorted.map(a => {
+        const uid = a.userId || a.labourId;
+        const labour = allLabour.find(l => l.uid === uid);
+        const displayName = a.name || labour?.name || '<span style="color:#9AA8B6;">Unknown</span>';
+        return `
+          <tr>
+            <td>${fmtDate(a.date)}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:0.5rem;">
+                <div class="avatar" style="width:28px;height:28px;font-size:0.7rem;">${initials(labour?.name || displayName)}</div>
+                ${displayName}
+              </div>
+            </td>
+            <td style="color:#A855F7;font-weight:600;">${formatRupee(a.amount)}</td>
+            <td>
+              <div style="display:flex;gap:0.5rem;">
+                <button class="btn-warn" onclick="openEditAdvanceModal('${a.id}')">✏️ Edit</button>
+                <button class="btn-danger" onclick="openDeleteModal('${a.id}')">🗑 Delete</button>
+              </div>
+            </td>
+          </tr>`;
+      }).join("");
+
+      container.innerHTML = `
+        <table class="data-table">
+          <thead><tr><th>Date</th><th>Labour</th><th>Amount</th><th>Actions</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    }
+
+    // ─── Update Labour Rates (dailyRate + fixedSalary) ───────────
+    window.updateLabourRates = async function(uid) {
+      const rateInput = document.getElementById("wage-" + uid);
+      const salaryInput = document.getElementById("salary-" + uid);
+      const rate = parseFloat(rateInput?.value) || 0;
+      const fixedSalary = parseFloat(salaryInput?.value) || 0;
+      try {
+        await updateDoc(doc(db, "users", uid), { dailyRate: rate, fixedSalary: fixedSalary });
+        const idx = allLabour.findIndex(l => l.uid === uid);
+        if (idx >= 0) { allLabour[idx].dailyRate = rate; allLabour[idx].fixedSalary = fixedSalary; }
+        showToast("Saved: Daily Rate & Gross Salary updated!", "success");
+        loadDashboard();
+      } catch (e) {
+        console.error("Labour rates update error:", e);
+        showToast("Failed to save. Try again.", "error");
+      }
+    };
+
+    // ─── Labour Detail Modal ──────────────────────────────────────
+    window.openDetailModal = async function(uid) {
+      const labour = allLabour.find(l => l.uid === uid);
+      if (!labour) return;
+
+      // Strictly filter by userId for this individual worker only
+      const attRecords = getAttendanceForUser(uid);
+      const advRecords = getAdvancesForUser(uid);
+      const totalAdv = advRecords.reduce((s, a) => s + Number(a.amount || 0), 0);
+      // Use fixedSalary (manual gross salary) — NOT calculated from dailyRate
+      const gross = Number(labour.fixedSalary || 0);
+      const remaining = gross - totalAdv;
+      const presentToday = isPresentToday(uid);
+
+      const attRows = attRecords.length > 0
+        ? attRecords.sort((a, b) => (b.date || "").localeCompare(a.date || ""))
+            .slice(0, 10)
+            .map(a => `<tr><td>${fmtDate(a.date)}</td><td><span class="badge badge-green">${a.status}</span></td></tr>`)
+            .join("")
+        : '<tr><td colspan="2" style="text-align:center;color:#9AA8B6;">No attendance</td></tr>';
+
+      document.getElementById("detail-modal-body").innerHTML = `
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
+          <div class="avatar" style="width:52px;height:52px;font-size:1.1rem;">${initials(labour.name)}</div>
+          <div>
+            <div style="font-size:1.1rem;font-weight:700;color:#EAF0F7;">${labour.name}</div>
+            <div style="color:#9AA8B6;font-size:0.85rem;">${labour.email}</div>
+            <div style="margin-top:0.35rem;">${presentToday
+              ? '<span class="badge badge-green">✅ Present Today</span>'
+              : '<span class="badge badge-red">❌ Absent Today</span>'
+            }</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.25rem;">
+          <div class="glass-card" style="padding:0.875rem;border-radius:12px;">
+            <div style="font-size:0.7rem;font-weight:600;color:#9AA8B6;letter-spacing:0.05em;text-transform:uppercase;">Daily Rate</div>
+            <div style="font-size:1.25rem;font-weight:800;color:#22D3EE;">${formatRupee(labour.dailyRate)}</div>
+          </div>
+          <div class="glass-card" style="padding:0.875rem;border-radius:12px;">
+            <div style="font-size:0.7rem;font-weight:600;color:#9AA8B6;letter-spacing:0.05em;text-transform:uppercase;">Days Worked</div>
+            <div style="font-size:1.25rem;font-weight:800;color:#10B981;">${attRecords.length}</div>
+          </div>
+          <div class="glass-card" style="padding:0.875rem;border-radius:12px;">
+            <div style="font-size:0.7rem;font-weight:600;color:#9AA8B6;letter-spacing:0.05em;text-transform:uppercase;">Gross Salary</div>
+            <div style="font-size:1.25rem;font-weight:800;color:#F59E0B;">${formatRupee(gross)}</div>
+          </div>
+          <div class="glass-card" style="padding:0.875rem;border-radius:12px;">
+            <div style="font-size:0.7rem;font-weight:600;color:#9AA8B6;letter-spacing:0.05em;text-transform:uppercase;">Advance Taken</div>
+            <div style="font-size:1.25rem;font-weight:800;color:#FCA5A5;">${formatRupee(totalAdv)}</div>
+          </div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1rem;margin-bottom:1.25rem;">
+          <div style="font-size:0.8rem;color:#9AA8B6;margin-bottom:0.25rem;">Remaining Salary</div>
+          <div style="font-size:1.5rem;font-weight:800;color:${remaining >= 0 ? '#6EE7B7' : '#FCA5A5'};">${formatRupee(remaining)}</div>
+          <div style="font-size:0.75rem;color:#9AA8B6;margin-top:0.25rem;">= Gross ₹${labour.fixedSalary || 0} − Advance ${formatRupee(totalAdv)}</div>
+        </div>
+
+        <div style="font-size:0.85rem;font-weight:600;color:#EAF0F7;margin-bottom:0.625rem;">Recent Attendance</div>
+        <table class="data-table" style="font-size:0.82rem;">
+          <thead><tr><th>Date</th><th>Status</th></tr></thead>
+          <tbody>${attRows}</tbody>
+        </table>
+        ${attRecords.length > 10 ? `<div style="text-align:center;color:#9AA8B6;font-size:0.75rem;padding:0.5rem;">Showing last 10 of ${attRecords.length} records</div>` : ""}
+      `;
+
+      document.getElementById("detail-modal").style.display = "flex";
+    };
+    window.closeDetailModal = () => { document.getElementById("detail-modal").style.display = "none"; };
+
+    // ─── Add Advance Modal ────────────────────────────────────────
+    window.openAddAdvanceModal = function() {
+      document.getElementById("advance-modal-title").textContent = "Add Advance";
+      document.getElementById("advance-edit-id").value = "";
+      document.getElementById("advance-amount").value = "";
+      document.getElementById("advance-date").value = new Date().toISOString().slice(0, 10);
+      document.getElementById("save-advance-btn").textContent = "Save Advance";
+
+      const sel = document.getElementById("advance-labour-select");
+      sel.innerHTML = allLabour.map(l => `<option value="${l.uid}">${l.name}</option>`).join("");
+
+      document.getElementById("advance-modal").style.display = "flex";
+    };
+
+    window.openEditAdvanceModal = function(advId) {
+      const adv = allAdvances.find(a => a.id === advId);
+      if (!adv) return;
+
+      document.getElementById("advance-modal-title").textContent = "Edit Advance";
+      document.getElementById("advance-edit-id").value = advId;
+      document.getElementById("advance-amount").value = adv.amount;
+      document.getElementById("advance-date").value = adv.date;
+      document.getElementById("save-advance-btn").textContent = "Update Advance";
+
+      const sel = document.getElementById("advance-labour-select");
+      const uid = adv.userId || adv.labourId;
+      sel.innerHTML = allLabour.map(l => `<option value="${l.uid}" ${l.uid === uid ? "selected" : ""}>${l.name}</option>`).join("");
+
+      document.getElementById("advance-modal").style.display = "flex";
+    };
+
+    window.closeAdvanceModal = () => { document.getElementById("advance-modal").style.display = "none"; };
+
+    window.saveAdvance = async function() {
+      const editId = document.getElementById("advance-edit-id").value;
+      const labourId = document.getElementById("advance-labour-select").value;
+      const amount = parseFloat(document.getElementById("advance-amount").value);
+      const date = document.getElementById("advance-date").value;
+
+      if (!labourId || !amount || amount <= 0 || !date) {
+        showToast("Please fill all fields correctly.", "error"); return;
+      }
+
+      const selectedLabour = allLabour.find(l => l.uid === labourId);
+      const labourName = selectedLabour ? selectedLabour.name : "";
+
+      const btn = document.getElementById("save-advance-btn");
+      btn.disabled = true;
+
+      try {
+        if (editId) {
+          await updateDoc(doc(db, "advances", editId), {
+            userId: labourId,
+            name: labourName,
+            amount,
+            date
+          });
+          showToast("Advance updated!", "success");
+        } else {
+          await addDoc(collection(db, "advances"), {
+            userId: labourId,
+            name: labourName,
+            amount,
+            date
+          });
+          showToast("Advance added!", "success");
+        }
+        closeAdvanceModal();
+      } catch (e) {
+        console.error("Advance save error:", e);
+        showToast("Failed to save advance.", "error");
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    // ─── Delete Advance ───────────────────────────────────────────
+    window.openDeleteModal = function(advId) {
+      deleteTargetId = advId;
+      document.getElementById("delete-modal").style.display = "flex";
+    };
+    window.closeDeleteModal = () => {
+      deleteTargetId = null;
+      document.getElementById("delete-modal").style.display = "none";
+    };
+    window.confirmDelete = async function() {
+      if (!deleteTargetId) return;
+      try {
+        await deleteDoc(doc(db, "advances", deleteTargetId));
+        showToast("Advance deleted.", "success");
+        closeDeleteModal();
+      } catch (e) {
+        console.error("Delete error:", e);
+        showToast("Failed to delete.", "error");
+      }
+    };
+
+    // Close modals on backdrop click
+    document.getElementById("advance-modal").addEventListener("click", function(e) {
+      if (e.target === this) closeAdvanceModal();
+    });
+    document.getElementById("detail-modal").addEventListener("click", function(e) {
+      if (e.target === this) closeDetailModal();
+    });
+    document.getElementById("delete-modal").addEventListener("click", function(e) {
+      if (e.target === this) closeDeleteModal();
+    });
+
+    // ─── Logout ───────────────────────────────────────────────────
+    window.handleLogout = async function() {
+      if (unsubAttendance) unsubAttendance();
+      if (unsubAdvances) unsubAdvances();
+      try {
+        await signOut(auth);
+        window.location.href = "index.html";
+      } catch (e) {
+        showToast("Logout failed.", "error");
+      }
+    };
+
+    // ─── Midnight Auto-Reset ──────────────────────────────────────
+    // Schedules a page reload at midnight so the dashboard auto-resets each new day
+    // No data is ever deleted — the date filter simply moves forward
+    function scheduleMidnightReset() {
+      const now = new Date();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 500);
+      const msUntilMidnight = midnight - now;
+      console.log(`[auto-reset] Admin reload in ${Math.round(msUntilMidnight / 60000)} min at midnight`);
+      setTimeout(() => window.location.reload(), msUntilMidnight);
+    }
+    scheduleMidnightReset();
+  </script>
+</body>
+</html>
